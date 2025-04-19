@@ -1,0 +1,106 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const title = "Article - TonPatron";
+const description = "Lisez notre article sur les tendances du marché du travail.";
+
+interface Article {
+  id: string;
+  title: string;
+  content: string;
+  coverImage: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const articles: Article[] = [
+  {
+    id: '1',
+    title: 'Bienvenue sur notre blog',
+    content: '<p>Bienvenue sur notre blog !</p>',
+    coverImage: '',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  // Ajoutez d'autres articles ici
+];
+
+export async function getStaticPaths() {
+  const articles: Article[] = [
+    {
+      id: '1',
+      title: 'Bienvenue sur notre blog',
+      content: '<p>Bienvenue sur notre blog !</p>',
+      coverImage: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    // Ajoutez d'autres articles ici
+  ];
+  return articles.map(article => ({
+    params: { id: article.id }
+  }));
+}
+
+const article = articles.find(a => a.id === Astro.params.id);
+
+if (!article) {
+  throw new Error('Article non trouvé');
+}
+---
+
+<Layout title={`${article.title} - Blog`} description={article.content.slice(0, 150) + '...'}>
+  <div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+      <a 
+        href="/blog"
+        class="text-blue-600 hover:text-blue-800 mb-8 inline-flex items-center"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Retour aux articles
+      </a>
+
+      <article class="prose prose-blue max-w-none">
+        {article.coverImage && (
+          <img
+            src={article.coverImage}
+            alt={article.title}
+            class="w-full h-64 object-cover rounded-lg mb-6"
+          />
+        )}
+        <h1 class="text-4xl font-bold mb-4">{article.title}</h1>
+        <p class="text-gray-600 mb-8">
+          {new Date(article.createdAt).toLocaleDateString()}
+        </p>
+        <div class="prose max-w-none text-gray-700">
+          <div dangerouslySetInnerHTML={{ __html: article.content }} />
+        </div>
+      </article>
+
+      <div class="mt-12 border-t pt-8">
+        <h2 class="text-xl font-semibold mb-4">Articles similaires</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {articles
+            .filter(a => a.id !== article.id)
+            .slice(0, 2)
+            .map((related) => (
+              <article class="bg-white rounded-lg shadow-sm">
+                <div class="p-6">
+                  <h3 class="text-lg font-semibold mb-2">
+                    <a href={`/blog/${related.id}`} class="hover:text-blue-600">
+                      {related.title}
+                    </a>
+                  </h3>
+                  <p class="text-gray-600">
+                    {new Date(related.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </article>
+            ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

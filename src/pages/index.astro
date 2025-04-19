@@ -1,0 +1,104 @@
+---
+import Layout from '../layouts/Layout.astro';
+import EntrepriseSearch from '../components/EntrepriseSearch.jsx';
+
+const title = "Accueil - Avis d'employés sur les entreprises";
+const description = "Découvrez des avis authentiques d'employés sur leur entreprise. Partagez votre expérience et aidez d'autres à faire le bon choix de carrière.";
+---
+
+<Layout title={title} description={description}>
+  <!-- Hero Section -->
+  <section class="relative w-full py-24 md:py-32 bg-gradient-to-br from-blue-700 via-blue-500 to-purple-600 text-white text-center overflow-hidden">
+    <div class="absolute inset-0 opacity-60 bg-gradient-to-br from-blue-700 via-blue-500 to-purple-600"></div>
+    <div class="relative z-10 max-w-3xl mx-auto">
+      <h1 class="text-4xl md:text-6xl font-extrabold mb-6 drop-shadow-xl text-white">Avis d'employés sur les<br/>entreprises Françaises</h1>
+      <p class="text-lg md:text-2xl mb-10 font-medium drop-shadow-lg text-white">Évaluez et découvrez les avis sur plus de 4,5 millions d'entreprises françaises. Notes, salaires et conditions de travail.</p>
+      <EntrepriseSearch client:load />
+    </div>
+  </section>
+
+  <!-- Baromètre Section -->
+  <section class="py-16 bg-white">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-2xl md:text-3xl font-bold text-center mb-8 text-blue-700">Le Baromètre des Entreprises Françaises</h2>
+      <div class="flex flex-col md:flex-row items-center justify-center gap-8">
+        <div class="bg-white rounded-2xl shadow-xl p-8 flex-1 min-w-[250px] text-center border border-blue-50">
+          <div class="text-5xl font-bold text-yellow-400 mb-2">3.3/5</div>
+          <div class="text-gray-500 mb-2">Note moyenne nationale</div>
+          <div class="flex flex-col gap-1 mt-4">
+            <div class="flex items-center justify-between text-sm"><span>Ambiance</span><span>3.6</span></div>
+            <div class="flex items-center justify-between text-sm"><span>Salaire</span><span>3.2</span></div>
+            <div class="flex items-center justify-between text-sm"><span>Équilibre</span><span>3.1</span></div>
+            <div class="flex items-center justify-between text-sm"><span>Management</span><span>2.9</span></div>
+          </div>
+        </div>
+        <div class="flex-1 min-w-[250px]">
+          <img src="/barometre-entreprise.svg" alt="Baromètre des entreprises" class="w-full max-w-xs mx-auto" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Entreprises populaires Section -->
+  <section class="py-16 bg-gray-50">
+    <h2 class="text-2xl md:text-3xl font-bold text-center mb-12 text-blue-700">Entreprises les mieux notées</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+      <!-- Exemple de carte entreprise -->
+      <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center border border-gray-100">
+        <img src="/logo-exemple.svg" alt="Logo Entreprise" class="w-16 h-16 rounded-full mb-4 border border-gray-200 bg-gray-50" />
+        <h3 class="text-lg font-semibold mb-2">Entreprise A</h3>
+        <div class="flex items-center mb-2">
+          <span class="text-yellow-400 font-bold text-xl mr-1">4.5</span>
+          <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.97a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.287 3.97c.3.921-.755 1.688-1.54 1.118l-3.38-2.455a1 1 0 00-1.176 0l-3.38 2.455c-.784.57-1.838-.197-1.54-1.118l1.287-3.97a1 1 0 00-.364-1.118L2.049 9.397c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.97z"/></svg>
+        </div>
+        <span class="text-gray-500 text-sm mb-2">Secteur : Tech</span>
+        <a href="#" class="mt-2 btn btn-primary w-full">Voir les avis</a>
+      </div>
+      <!-- Ajouter d'autres cartes dynamiquement -->
+    </div>
+  </section>
+
+  <!-- Comment ça marche Section -->
+  <section class="py-16 bg-white">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-2xl md:text-3xl font-bold text-center mb-12 text-blue-700">Comment ça marche ?</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="text-center p-8 bg-blue-50 rounded-2xl shadow-md flex flex-col items-center">
+          <div class="w-16 h-16 bg-blue-200 rounded-full flex items-center justify-center mb-4">
+            <span class="text-3xl font-bold text-blue-700">1</span>
+          </div>
+          <h3 class="text-xl font-semibold mb-4">Recherchez</h3>
+          <p class="text-gray-600">Trouvez l'entreprise qui vous intéresse</p>
+        </div>
+        <div class="text-center p-8 bg-green-50 rounded-2xl shadow-md flex flex-col items-center">
+          <div class="w-16 h-16 bg-green-200 rounded-full flex items-center justify-center mb-4">
+            <span class="text-3xl font-bold text-green-700">2</span>
+          </div>
+          <h3 class="text-xl font-semibold mb-4">Découvrez</h3>
+          <p class="text-gray-600">Lisez les avis d'employés actuels et anciens</p>
+        </div>
+        <div class="text-center p-8 bg-yellow-50 rounded-2xl shadow-md flex flex-col items-center">
+          <div class="w-16 h-16 bg-yellow-200 rounded-full flex items-center justify-center mb-4">
+            <span class="text-3xl font-bold text-yellow-700">3</span>
+          </div>
+          <h3 class="text-xl font-semibold mb-4">Partagez</h3>
+          <p class="text-gray-600">Contribuez en partageant votre propre expérience</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Témoignages Section -->
+  <section class="py-16 bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <h2 class="text-2xl md:text-3xl font-bold text-center mb-12 text-blue-700">Ce que disent nos utilisateurs</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+      <!-- Exemple de carte témoignage -->
+      <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center border border-gray-100">
+        <img src="/avatar-exemple.png" alt="Utilisateur" class="w-16 h-16 rounded-full mb-4 border border-gray-200 bg-gray-50" />
+        <p class="text-gray-700 mb-4 italic">“Plateforme très utile pour comparer les entreprises avant de postuler. Les avis sont authentiques et variés.”</p>
+        <span class="font-semibold text-blue-700">Sophie, RH</span>
+      </div>
+      <!-- Ajouter d'autres témoignages dynamiquement -->
+    </div>
+  </section>
+</Layout>

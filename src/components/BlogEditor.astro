@@ -1,0 +1,132 @@
+---
+import { Editor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
+import TextAlign from '@tiptap/extension-text-align';
+import Underline from '@tiptap/extension-underline';
+import EditorToolbar from './EditorToolbar.astro';
+
+interface Props {
+  content?: string;
+  onChange: (content: string) => void;
+}
+
+const { content = '', onChange } = Astro.props;
+
+const editor = new Editor({
+  extensions: [
+    StarterKit,
+    Image,
+    Link,
+    TextAlign.configure({
+      types: ['heading', 'paragraph'],
+    }),
+    Underline,
+  ],
+  content,
+  onUpdate: ({ editor }) => {
+    onChange(editor.getHTML());
+  },
+});
+
+const handleImageUpload = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  if (!target.files?.[0]) return;
+  
+  const file = target.files[0];
+  const reader = new FileReader();
+  
+  reader.onloadend = () => {
+    editor.chain().focus().setImage({ src: reader.result as string }).run();
+  };
+  
+  reader.readAsDataURL(file);
+};
+
+const handleLink = () => {
+  const url = prompt('Enter the URL:');
+  if (url) {
+    editor.chain().focus().setLink({ href: url }).run();
+  }
+};
+
+const handleImageClick = () => {
+  const input = document.getElementById('image-upload') as HTMLInputElement;
+  if (input) {
+    input.click();
+  }
+};
+
+const handleImageChange = (event: Event) => {
+  handleImageUpload(event);
+};
+---
+
+<div class="flex flex-col gap-4">
+  <EditorToolbar editor={editor} />
+  
+  <div class="flex gap-2 mb-4">
+    <button 
+      class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+      onclick="handleImageClick()"
+    >
+      Insérer une image
+    </button>
+    <button 
+      class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+      onclick="handleLink()"
+    >
+      Insérer un lien
+    </button>
+  </div>
+
+  <input 
+    type="file" 
+    accept="image/*" 
+    class="hidden" 
+    id="image-upload"
+    onchange="handleImageChange(event)"
+  />
+
+  <div class="prose max-w-none">
+    <div class="editor" data-editor={editor}>
+      <div data-editor-content={editor.getHTML()} />
+    </div>
+  </div>
+</div>
+
+<style>
+:global(.ProseMirror) {
+  min-height: 400px;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+:global(.ProseMirror p.is-empty::before) {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd;
+  pointer-events: none;
+  height: 0;
+}
+
+:global(.ProseMirror ul, .ProseMirror ol) {
+  margin-left: 2rem;
+}
+
+:global(.ProseMirror img) {
+  max-width: 100%;
+  height: auto;
+}
+
+:global(.ProseMirror a) {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+:global(.ProseMirror .is-editor-empty) {
+  opacity: 0.5;
+}
+</style>
