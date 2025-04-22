@@ -1,0 +1,135 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const title = "FAQ - Questions fréquentes - TonPatron";
+const description = "Trouvez les réponses à vos questions sur TonPatron. Comment publier un avis, signaler un contenu inapproprié, et plus encore.";
+
+const faqs = [
+  {
+    category: "Général",
+    questions: [
+      {
+        q: "Qu'est-ce que TonPatron ?",
+        a: "TonPatron est une plateforme qui permet aux employés de partager leur expérience professionnelle de manière anonyme. Notre objectif est d'aider les candidats à faire des choix de carrière éclairés en leur donnant accès à des avis authentiques sur les entreprises."
+      },
+      {
+        q: "Est-ce que c'est gratuit ?",
+        a: "Oui, TonPatron est entièrement gratuit pour les utilisateurs. Vous pouvez consulter les avis et en publier sans aucun frais."
+      },
+      {
+        q: "Comment garantissez-vous l'authenticité des avis ?",
+        a: "Nous utilisons plusieurs mécanismes de vérification, notamment la validation des adresses email professionnelles et des systèmes de détection automatique des avis suspects. Notre équipe de modération examine également les signalements d'avis inappropriés."
+      }
+    ]
+  },
+  {
+    category: "Publication d'avis",
+    questions: [
+      {
+        q: "Puis-je publier un avis de manière anonyme ?",
+        a: "Oui, tous les avis sont publiés de manière anonyme. Seul votre poste et votre département (si renseigné) seront visibles publiquement."
+      },
+      {
+        q: "Quelles sont les règles pour publier un avis ?",
+        a: "Les avis doivent être respectueux, objectifs et basés sur une expérience réelle. Évitez les attaques personnelles, le langage inapproprié et les informations confidentielles de l'entreprise."
+      },
+      {
+        q: "Puis-je modifier mon avis après publication ?",
+        a: "Oui, vous pouvez modifier votre avis dans les 30 jours suivant sa publication. Au-delà, contactez notre support pour toute modification nécessaire."
+      }
+    ]
+  },
+  {
+    category: "Entreprises",
+    questions: [
+      {
+        q: "Comment ajouter une entreprise manquante ?",
+        a: "Si vous ne trouvez pas une entreprise, vous pouvez la suggérer via le formulaire dédié. Notre équipe vérifiera les informations et l'ajoutera à notre base de données."
+      },
+      {
+        q: "Je suis un représentant d'entreprise, comment gérer notre page ?",
+        a: "Les entreprises peuvent créer un compte professionnel pour gérer leur page, répondre aux avis et partager des informations officielles. Contactez-nous pour plus d'informations."
+      }
+    ]
+  }
+];
+---
+
+<Layout title={title} description={description}>
+  <!-- En-tête de la page -->
+  <header class="py-12 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1 class="text-4xl font-bold mb-4">Questions fréquentes</h1>
+      <p class="text-xl opacity-90">Tout ce que vous devez savoir sur TonPatron</p>
+    </div>
+  </header>
+
+  <!-- Barre de recherche -->
+  <div class="max-w-2xl mx-auto -mt-6">
+    <div class="bg-white rounded-xl shadow-lg p-4">
+      <div class="relative">
+        <input 
+          type="search" 
+          placeholder="Rechercher une question..." 
+          class="w-full pl-12 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+        >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ par catégorie -->
+  <section class="py-12">
+    <div class="max-w-4xl mx-auto">
+      {faqs.map(category => (
+        <div class="mb-12">
+          <h2 class="text-2xl font-bold mb-6">{category.category}</h2>
+          <div class="space-y-6">
+            {category.questions.map(({ q, a }) => (
+              <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">{q}</h3>
+                <p class="text-gray-600">{a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Section Contact -->
+  <section class="py-12 bg-gray-50 -mx-4 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <h2 class="text-2xl font-bold mb-4">Vous n'avez pas trouvé votre réponse ?</h2>
+      <p class="text-gray-600 mb-8">Notre équipe est là pour vous aider</p>
+      <a 
+        href="/contact" 
+        class="inline-flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+      >
+        Contactez-nous
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Schema.org FAQ markup -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.flatMap(category => 
+      category.questions.map(({ q, a }) => ({
+        "@type": "Question",
+        "name": q,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": a
+        }
+      }))
+    )
+  })}>
+  </script>
+</Layout>

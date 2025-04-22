@@ -33,14 +33,21 @@ export default function EntrepriseSearch() {
 
   const handleClickEntreprise = (entreprise) => {
     // Préparer les infos à passer à la page de création si besoin
-    const nom = encodeURIComponent(entreprise.nom_raison_sociale || entreprise.nom_complet || entreprise.nom || '');
-    const siren = encodeURIComponent(entreprise.siren || '');
-    const adresse = encodeURIComponent(
-      [entreprise.adresse_ligne_1, entreprise.adresse_ligne_2, entreprise.adresse_ligne_3, entreprise.libelle_commune, entreprise.code_postal, entreprise.pays]
-        .filter(Boolean).join(', ')
-    );
-    // On tente d'aller sur la fiche, sinon on pré-remplit la création
-    window.location.href = `/entreprise/${siren}?nom=${nom}&adresse=${adresse}`;
+    const params = new URLSearchParams({
+      nom: entreprise.nom_raison_sociale || entreprise.nom_complet || entreprise.nom || '',
+      siren: entreprise.siren || '',
+      adresse: (entreprise.siege && entreprise.siege.adresse) || '',
+      categorie: entreprise.categorie_entreprise || '',
+      date_creation: entreprise.date_creation || '',
+      activite: entreprise.activite_principale || '',
+      effectif: entreprise.tranche_effectif_salarie || '',
+      code_postal: (entreprise.siege && entreprise.siege.code_postal) || '',
+      commune: (entreprise.siege && entreprise.siege.libelle_commune) || '',
+      nom_commercial: (entreprise.siege && entreprise.siege.nom_commercial) || '',
+      etablissements: entreprise.nombre_etablissements || '',
+      etat: entreprise.etat_administratif || ''
+    });
+    window.location.href = `/entreprise/${entreprise.siren}?${params.toString()}`;
   };
 
   return (
@@ -71,9 +78,14 @@ export default function EntrepriseSearch() {
                 onKeyDown={e => { if (e.key === 'Enter') handleClickEntreprise(entreprise); }}
                 aria-label={`Voir la fiche de ${entreprise.nom_raison_sociale || entreprise.nom_complet}`}
               >
-                <div className="font-bold text-blue-700">{entreprise.nom_raison_sociale || entreprise.nom_complet}</div>
-                <div className="text-sm text-gray-500">SIREN : {entreprise.siren}</div>
-                <div className="text-sm text-gray-500">{entreprise.libelle_commune} ({entreprise.code_postal})</div>
+                <div className="font-bold text-blue-700">
+                  {entreprise.nom_raison_sociale || entreprise.nom_complet}
+                </div>
+                <div className="text-sm text-gray-500">
+                  {entreprise.siege && entreprise.siege.adresse
+                    ? entreprise.siege.adresse
+                    : 'Adresse non disponible'}
+                </div>
               </li>
             ))}
           </ul>
