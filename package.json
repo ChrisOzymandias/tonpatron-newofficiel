@@ -12,6 +12,7 @@
     "@astrojs/netlify": "^6.3.0",
     "@astrojs/react": "^4.2.4",
     "@astrojs/tailwind": "^6.0.2",
+    "@supabase/supabase-js": "^2.49.4",
     "@tiptap/extension-font-family": "^2.11.5",
     "@tiptap/extension-image": "^2.11.5",
     "@tiptap/extension-link": "^2.11.5",

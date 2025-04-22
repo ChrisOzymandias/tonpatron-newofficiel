@@ -1,5 +1,6 @@
 ---
 import { Astro } from 'astro';
+import { supabase } from '../../utils/supabaseClient';
 
 export async function getStaticPaths() {
   // On ne pré-génère aucune page, elles seront générées à la volée (SSG fallback)
@@ -18,18 +19,44 @@ export async function get({ params }) {
       notFound = true;
     } else {
       data = await res.json();
+      // On accepte la fiche si le SIREN existe
+      if (!data || !data.siren) {
+        notFound = true;
+        data = null;
+      }
     }
   } catch (e) {
     notFound = true;
     error = e.toString();
   }
+  // On prépare les infos minimales pour la fiche unique
+  let nom = data?.nom_raison_sociale || data?.nom_complet || data?.nom || null;
+  let adresse = null;
+  if (data?.siege) {
+    adresse = [data.siege.adresse_ligne_1, data.siege.libelle_commune, data.siege.code_postal].filter(Boolean).join(', ');
+  }
   return {
     props: {
-      entreprise: data,
-      siren,
+      siren: data?.siren || siren,
+      nom,
+      adresse,
       notFound,
       error
     }
+  };
+}
+
+export async function post({ request }) {
+  const body = await request.formData();
+  const siren = body.get('siren');
+  const nom = body.get('nom');
+  const adresse = body.get('adresse');
+  // Crée la fiche en base si elle n'existe pas déjà
+  const { data, error } = await supabase
+    .from('entreprises')
+    .upsert([{ siren, nom, adresse }], { onConflict: 'siren' });
+  return {
+    body: JSON.stringify({ success: !error, error })
   };
 }
 ---
@@ -44,31 +71,27 @@ export async function get({ params }) {
     <a href="/entreprises" class="inline-block mt-6 px-5 py-3 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition">Retour à la liste des entreprises</a>
   </section>
 ) : (
-  <>
-    <head>
-      <title>{Astro.props.entreprise.nom_raison_sociale || Astro.props.entreprise.nom_complet} | Fiche entreprise | TonPatron</title>
-      <meta name="description" content={`Fiche entreprise de ${Astro.props.entreprise.nom_raison_sociale || Astro.props.entreprise.nom_complet} (SIREN : ${Astro.props.siren}). Adresse : ${Astro.props.entreprise.siege?.adresse_ligne_1 || ''}, ${Astro.props.entreprise.siege?.libelle_commune || ''}. Retrouvez les informations légales, SIREN, secteur et plus.`} />
-      <meta property="og:title" content={`${Astro.props.entreprise.nom_raison_sociale || Astro.props.entreprise.nom_complet} | TonPatron`} />
-      <meta property="og:description" content={`Découvrez les informations clés sur ${Astro.props.entreprise.nom_raison_sociale || Astro.props.entreprise.nom_complet}, SIREN ${Astro.props.siren}, secteur : ${Astro.props.entreprise.activite_principale_libelle || ''}.`} />
-      <meta property="og:type" content="website" />
-      <meta property="og:url" content={`https://tonpatron.fr/entreprise/${Astro.props.siren}`} />
-      <meta name="robots" content="index, follow" />
-      <link rel="canonical" href={`https://tonpatron.fr/entreprise/${Astro.props.siren}`} />
-    </head>
-    <section class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8 mt-16 mb-12">
-      <h1 class="text-3xl md:text-4xl font-extrabold text-blue-700 mb-4">{Astro.props.entreprise.nom_raison_sociale || Astro.props.entreprise.nom_complet}</h1>
-      <div class="text-gray-700 mb-2"><span class="font-semibold">SIREN :</span> {Astro.props.siren}</div>
-      <div class="text-gray-700 mb-2"><span class="font-semibold">Adresse :</span> {Astro.props.entreprise.siege?.adresse_ligne_1}, {Astro.props.entreprise.siege?.libelle_commune} {Astro.props.entreprise.siege?.code_postal}</div>
-      <div class="text-gray-700 mb-2"><span class="font-semibold">Secteur d'activité :</span> {Astro.props.entreprise.activite_principale_libelle}</div>
-      <div class="text-gray-700 mb-2"><span class="font-semibold">Date de création :</span> {Astro.props.entreprise.date_creation}</div>
-      <div class="text-gray-700 mb-2"><span class="font-semibold">Statut :</span> {Astro.props.entreprise.etat_administratif}</div>
-      <div class="text-gray-700 mb-2"><span class="font-semibold">Effectif :</span> {Astro.props.entreprise.tranche_effectif_salarie}</div>
-      <div class="text-gray-700 mb-2"><span class="font-semibold">Forme juridique :</span> {Astro.props.entreprise.categorie_juridique}</div>
-      <div class="text-gray-700 mb-2"><span class="font-semibold">Code NAF :</span> {Astro.props.entreprise.activite_principale}
-      </div>
-      <div class="mt-8">
-        <a href={`https://annuaire-entreprises.data.gouv.fr/entreprise/${Astro.props.siren}`} target="_blank" rel="noopener" class="text-blue-600 hover:underline">Voir la fiche officielle</a>
-      </div>
-    </section>
-  </>
+  <section class="max-w-xl mx-auto bg-white rounded-xl shadow-lg p-8 mt-16 mb-12 text-center">
+    <h1 class="text-3xl font-extrabold text-blue-700 mb-4">
+      {Astro.props.nom
+        ? `L'entreprise ${Astro.props.nom} au numéro de SIREN ${Astro.props.siren}`
+        : `Entreprise au numéro de SIREN ${Astro.props.siren}`}
+    </h1>
+    <form method="POST" class="mb-8">
+      <input type="hidden" name="siren" value={Astro.props.siren} />
+      <label class="block mb-2 font-semibold">Nom de l'entreprise</label>
+      <input type="text" name="nom" value={Astro.props.nom || ''} class="border rounded p-2 w-full mb-4" required />
+      <label class="block mb-2 font-semibold">Adresse</label>
+      <input type="text" name="adresse" value={Astro.props.adresse || ''} class="border rounded p-2 w-full mb-4" required />
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Créer ou mettre à jour la fiche</button>
+    </form>
+    <p class="text-lg text-gray-700 mb-4">
+      {Astro.props.adresse
+        ? `Située à ${Astro.props.adresse}.`
+        : "Adresse inconnue."}
+    </p>
+    <div class="mt-8">
+      <a href={`https://annuaire-entreprises.data.gouv.fr/entreprise/${Astro.props.siren}`} target="_blank" rel="noopener" class="text-blue-600 hover:underline">Voir la fiche officielle</a>
+    </div>
+  </section>
 )}
