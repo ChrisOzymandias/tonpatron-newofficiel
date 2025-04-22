@@ -1,4 +1,6 @@
 ---
+const nom = Astro.url.searchParams.get('nom') ?? '';
+const adresse = Astro.url.searchParams.get('adresse') ?? '';
 const siren = Astro.url.searchParams.get('siren') ?? '';
 ---
 <html lang="fr">
@@ -12,7 +14,9 @@ const siren = Astro.url.searchParams.get('siren') ?? '';
       {siren && <div class="mb-4">Pour le SIREN : <span class="font-mono">{siren}</span></div>}
       <form method="POST" action="#">
         <label class="block mb-2 font-semibold">Nom de l'entreprise</label>
-        <input type="text" name="nom" class="border rounded p-2 w-full mb-4" required />
+        <input type="text" name="nom" value={nom} class="border rounded p-2 w-full mb-4" required />
+        <label class="block mb-2 font-semibold">Adresse</label>
+        <input type="text" name="adresse" value={adresse} class="border rounded p-2 w-full mb-4" required />
         <label class="block mb-2 font-semibold">SIREN</label>
         <input type="text" name="siren" value={siren} class="border rounded p-2 w-full mb-4" required />
         <label class="block mb-2 font-semibold">Votre avis</label>

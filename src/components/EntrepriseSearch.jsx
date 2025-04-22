@@ -31,8 +31,16 @@ export default function EntrepriseSearch() {
     return () => controller.abort();
   }, [query]);
 
-  const handleClickEntreprise = (siren) => {
-    window.location.href = `/entreprise/${siren}`;
+  const handleClickEntreprise = (entreprise) => {
+    // Préparer les infos à passer à la page de création si besoin
+    const nom = encodeURIComponent(entreprise.nom_raison_sociale || entreprise.nom_complet || entreprise.nom || '');
+    const siren = encodeURIComponent(entreprise.siren || '');
+    const adresse = encodeURIComponent(
+      [entreprise.adresse_ligne_1, entreprise.adresse_ligne_2, entreprise.adresse_ligne_3, entreprise.libelle_commune, entreprise.code_postal, entreprise.pays]
+        .filter(Boolean).join(', ')
+    );
+    // On tente d'aller sur la fiche, sinon on pré-remplit la création
+    window.location.href = `/entreprise/${siren}?nom=${nom}&adresse=${adresse}`;
   };
 
   return (
@@ -58,9 +66,9 @@ export default function EntrepriseSearch() {
               <li
                 key={entreprise.siren}
                 className="p-4 hover:bg-blue-50 transition cursor-pointer"
-                onClick={() => handleClickEntreprise(entreprise.siren)}
+                onClick={() => handleClickEntreprise(entreprise)}
                 tabIndex={0}
-                onKeyDown={e => { if (e.key === 'Enter') handleClickEntreprise(entreprise.siren); }}
+                onKeyDown={e => { if (e.key === 'Enter') handleClickEntreprise(entreprise); }}
                 aria-label={`Voir la fiche de ${entreprise.nom_raison_sociale || entreprise.nom_complet}`}
               >
                 <div className="font-bold text-blue-700">{entreprise.nom_raison_sociale || entreprise.nom_complet}</div>

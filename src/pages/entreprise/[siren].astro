@@ -13,35 +13,60 @@ export async function get({ params }) {
   let data = null;
   let notFound = false;
   let error = null;
+  let apiResponseRaw = null;
+  let nom = null;
+  let adresse = null;
   try {
     const res = await fetch(apiUrl);
-    if (!res.ok) {
-      notFound = true;
-    } else {
-      data = await res.json();
-      // On accepte la fiche si le SIREN existe
-      if (!data || !data.siren) {
-        notFound = true;
+    apiResponseRaw = await res.text();
+    if (res.ok) {
+      try {
+        data = JSON.parse(apiResponseRaw);
+      } catch (e) {
         data = null;
       }
+      if (data) {
+        nom = data.nom_raison_sociale || data.nom_complet || data.nom || data.raison_sociale || null;
+        if (data.siege) {
+          adresse = [data.siege.adresse_ligne_1, data.siege.adresse_ligne_2, data.siege.adresse_ligne_3, data.siege.libelle_commune, data.siege.code_postal, data.siege.pays].filter(Boolean).join(', ');
+        } else if (data.adresse) {
+          adresse = data.adresse;
+        }
+      }
+    } else {
+      notFound = true;
     }
   } catch (e) {
     notFound = true;
     error = e.toString();
   }
-  // On prépare les infos minimales pour la fiche unique
-  let nom = data?.nom_raison_sociale || data?.nom_complet || data?.nom || null;
-  let adresse = null;
-  if (data?.siege) {
-    adresse = [data.siege.adresse_ligne_1, data.siege.libelle_commune, data.siege.code_postal].filter(Boolean).join(', ');
+
+  // Vérifie et crée la fiche automatiquement côté serveur si elle n'existe pas déjà
+  if (nom && siren) {
+    try {
+      const { data: exist, error: existError } = await supabase
+        .from('entreprises')
+        .select('siren')
+        .eq('siren', siren)
+        .single();
+      if (!exist && !existError) {
+        await supabase
+          .from('entreprises')
+          .upsert([{ siren, nom, adresse }], { onConflict: 'siren' });
+      }
+    } catch (e) {
+      // Optionnel : log ou ignorer
+    }
   }
+
   return {
     props: {
-      siren: data?.siren || siren,
+      siren,
       nom,
       adresse,
       notFound,
-      error
+      error,
+      apiResponseRaw
     }
   };
 }
@@ -60,15 +85,19 @@ export async function post({ request }) {
   };
 }
 ---
+<head>
+  <meta charset="utf-8" />
+  <title>{Astro.props.nom ? `L'entreprise ${Astro.props.nom} au numéro de SIREN ${Astro.props.siren}` : `Entreprise au numéro de SIREN ${Astro.props.siren}`}</title>
+</head>
 <!-- Debug minimal -->
-<pre style="background:#f6f8fa;padding:1em;overflow:auto;max-width:100vw;max-height:200px;">{JSON.stringify({params: Astro.params, props: Astro.props}, null, 2)}</pre>
+<pre style="background:#f6f8fa;padding:1em;overflow:auto;max-width:100vw;max-height:300px;">Réponse brute API : {Astro.props.apiResponseRaw}</pre>
 
 {Astro.props.notFound || Astro.props.error ? (
   <section class="max-w-xl mx-auto bg-white rounded-xl shadow-lg p-8 mt-16 mb-12 text-center">
     <h1 class="text-3xl font-extrabold text-red-700 mb-4">Entreprise introuvable</h1>
-    <p class="text-gray-700 mb-2">Impossible d'afficher la fiche de cette entreprise. Elle n'existe pas, a été supprimée, ou une erreur s'est produite lors de la récupération des données.</p>
+    <p class="text-gray-700 mb-2">Aucune information trouvée dans l’API pour ce SIREN. Vous pouvez créer une fiche personnalisée ci-dessous.</p>
     {Astro.props.error && <div class="text-xs text-red-500 mt-2">Détail technique : {Astro.props.error}</div>}
-    <a href="/entreprises" class="inline-block mt-6 px-5 py-3 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition">Retour à la liste des entreprises</a>
+    <a href={`/entreprise/creer?siren=${Astro.props.siren}`} class="inline-block mt-6 px-5 py-3 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition">Créer une fiche personnalisée</a>
   </section>
 ) : (
   <section class="max-w-xl mx-auto bg-white rounded-xl shadow-lg p-8 mt-16 mb-12 text-center">
@@ -77,21 +106,26 @@ export async function post({ request }) {
         ? `L'entreprise ${Astro.props.nom} au numéro de SIREN ${Astro.props.siren}`
         : `Entreprise au numéro de SIREN ${Astro.props.siren}`}
     </h1>
-    <form method="POST" class="mb-8">
-      <input type="hidden" name="siren" value={Astro.props.siren} />
-      <label class="block mb-2 font-semibold">Nom de l'entreprise</label>
-      <input type="text" name="nom" value={Astro.props.nom || ''} class="border rounded p-2 w-full mb-4" required />
-      <label class="block mb-2 font-semibold">Adresse</label>
-      <input type="text" name="adresse" value={Astro.props.adresse || ''} class="border rounded p-2 w-full mb-4" required />
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Créer ou mettre à jour la fiche</button>
-    </form>
-    <p class="text-lg text-gray-700 mb-4">
-      {Astro.props.adresse
-        ? `Située à ${Astro.props.adresse}.`
-        : "Adresse inconnue."}
-    </p>
-    <div class="mt-8">
-      <a href={`https://annuaire-entreprises.data.gouv.fr/entreprise/${Astro.props.siren}`} target="_blank" rel="noopener" class="text-blue-600 hover:underline">Voir la fiche officielle</a>
-    </div>
+    {Astro.props.nom && Astro.props.adresse ? (
+      <div>
+        <p class="text-lg text-gray-700 mb-4">
+          {Astro.props.adresse
+            ? `Située à ${Astro.props.adresse}.`
+            : "Adresse inconnue."}
+        </p>
+        <div class="mt-8">
+          <a href={`https://annuaire-entreprises.data.gouv.fr/entreprise/${Astro.props.siren}`} target="_blank" rel="noopener" class="text-blue-600 hover:underline">Voir la fiche officielle</a>
+        </div>
+      </div>
+    ) : (
+      <form method="POST" class="mb-8">
+        <input type="hidden" name="siren" value={Astro.props.siren} />
+        <label class="block mb-2 font-semibold">Nom de l'entreprise</label>
+        <input type="text" name="nom" value={Astro.props.nom || ''} class="border rounded p-2 w-full mb-4" required />
+        <label class="block mb-2 font-semibold">Adresse</label>
+        <input type="text" name="adresse" value={Astro.props.adresse || ''} class="border rounded p-2 w-full mb-4" required />
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Créer ou mettre à jour la fiche</button>
+      </form>
+    )}
   </section>
 )}
