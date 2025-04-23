@@ -1,0 +1,161 @@
+import React, { useEffect, useState } from 'react';
+import BlogEditorReact from './BlogEditorReact.jsx';
+import { supabase } from '../utils/supabaseClient.js';
+
+export default function AdminBlog() {
+  const [articles, setArticles] = useState([]);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => { fetchArticles(); }, []);
+
+  async function fetchArticles() {
+    setLoading(true);
+    setError(null);
+    const { data, error } = await supabase
+      .from('articles')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) setError('Erreur lors du chargement des articles : ' + error.message);
+    else setArticles(data || []);
+    setLoading(false);
+  }
+
+  async function handleSave(content) {
+    if (!selectedArticle) return;
+    setLoading(true);
+    setError(null);
+    const { data, error } = await supabase
+      .from('articles')
+      .update({ content, updated_at: new Date().toISOString() })
+      .eq('id', selectedArticle.id)
+      .select()
+      .single();
+    if (error) setError('Erreur lors de la sauvegarde : ' + error.message);
+    else {
+      setArticles(articles.map(a => a.id === data.id ? data : a));
+      setSelectedArticle(data);
+    }
+    setLoading(false);
+  }
+
+  async function handleDelete(id) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet article ?')) return;
+    setLoading(true);
+    setError(null);
+    const { error } = await supabase
+      .from('articles')
+      .delete()
+      .eq('id', id);
+    if (error) setError('Erreur lors de la suppression : ' + error.message);
+    else {
+      setArticles(articles.filter(a => a.id !== id));
+      setSelectedArticle(null);
+    }
+    setLoading(false);
+  }
+
+  async function handleNewArticle() {
+    setLoading(true);
+    setError(null);
+    const { data, error } = await supabase
+      .from('articles')
+      .insert([{ title: 'Nouvel article', content: '', cover_image: '' }])
+      .select()
+      .single();
+    if (error) setError('Erreur lors de la création : ' + error.message);
+    else {
+      setArticles([data, ...articles]);
+      setSelectedArticle(data);
+    }
+    setLoading(false);
+  }
+
+  function handleEdit(article) {
+    setSelectedArticle(article);
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Administration du blog</h1>
+        <button
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          onClick={handleNewArticle}
+          disabled={loading}
+        >
+          Nouvel article
+        </button>
+      </div>
+      {error && <div className="mb-4 text-red-600">{error}</div>}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="md:col-span-2">
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            {selectedArticle ? (
+              <div>
+                <input
+                  type="text"
+                  className="w-full text-2xl font-bold mb-4 border-b-2 focus:outline-none"
+                  value={selectedArticle.title}
+                  onChange={e => setSelectedArticle({ ...selectedArticle, title: e.target.value })}
+                />
+                <BlogEditorReact
+                  initialContent={selectedArticle.content}
+                  onContentChange={content => handleSave(content)}
+                />
+                <div className="flex gap-4 mt-4">
+                  <button
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    onClick={() => handleSave(selectedArticle.content)}
+                    disabled={loading}
+                  >
+                    Sauvegarder
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                    onClick={() => handleDelete(selectedArticle.id)}
+                    disabled={loading}
+                  >
+                    Supprimer
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500"
+                    onClick={() => setSelectedArticle(null)}
+                    disabled={loading}
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-gray-600">Sélectionnez un article à éditer ou créez-en un nouveau.</div>
+            )}
+          </div>
+        </div>
+        <div>
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-semibold mb-4">Articles</h2>
+            {loading ? (
+              <div>Chargement…</div>
+            ) : (
+              <ul className="space-y-2">
+                {articles.map(article => (
+                  <li key={article.id} className="flex justify-between items-center">
+                    <span
+                      className="cursor-pointer hover:underline"
+                      onClick={() => handleEdit(article)}
+                    >
+                      {article.title}
+                    </span>
+                    <span className="text-xs text-gray-400">{new Date(article.created_at).toLocaleDateString()}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

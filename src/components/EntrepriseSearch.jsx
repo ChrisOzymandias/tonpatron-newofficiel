@@ -32,22 +32,12 @@ export default function EntrepriseSearch() {
   }, [query]);
 
   const handleClickEntreprise = (entreprise) => {
-    // Préparer les infos à passer à la page de création si besoin
-    const params = new URLSearchParams({
-      nom: entreprise.nom_raison_sociale || entreprise.nom_complet || entreprise.nom || '',
-      siren: entreprise.siren || '',
-      adresse: (entreprise.siege && entreprise.siege.adresse) || '',
-      categorie: entreprise.categorie_entreprise || '',
-      date_creation: entreprise.date_creation || '',
-      activite: entreprise.activite_principale || '',
-      effectif: entreprise.tranche_effectif_salarie || '',
-      code_postal: (entreprise.siege && entreprise.siege.code_postal) || '',
-      commune: (entreprise.siege && entreprise.siege.libelle_commune) || '',
-      nom_commercial: (entreprise.siege && entreprise.siege.nom_commercial) || '',
-      etablissements: entreprise.nombre_etablissements || '',
-      etat: entreprise.etat_administratif || ''
-    });
-    window.location.href = `/entreprise/${entreprise.siren}?${params.toString()}`;
+    if (!entreprise.siren) {
+      console.error('Erreur : SIREN manquant dans l’objet entreprise', entreprise);
+      alert('Erreur : SIREN manquant, impossible d’ouvrir la fiche entreprise.');
+      return;
+    }
+    window.location.href = `/entreprise/${entreprise.siren}`;
   };
 
   return (
